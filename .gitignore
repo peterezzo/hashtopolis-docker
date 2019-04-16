@@ -1,0 +1,6 @@
+/facts_cache
+/host_vars
+/group_vars/*
+!/group_vars/all.yml
+/*.retry
+/inventory

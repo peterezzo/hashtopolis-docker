@@ -1,0 +1,18 @@
+# container versions
+php_version: 7.3
+mysql_version: 5.7
+apache_version: 2.4
+
+# database settings
+mysql_dbname: hashtopolis
+mysql_username: hashtopolis
+mysql_userpass: hashtopolis
+
+# where to put files on docker host
+staging_path: /root/hashtopolis
+install_path: /var/lib/docker/volumes/hashtopolis_web/_data
+install_user: www-data
+install_group: www-data
+
+# where to get application from
+hashtopolis_repo: 'https://github.com/s3inlc/hashtopolis.git'

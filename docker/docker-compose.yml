@@ -1,0 +1,33 @@
+version: "2.4"
+volumes:
+    db:
+    web:
+services:
+  db:
+    image: mysql:${MYSQL_VERSION}
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD
+      - MYSQL_DATABASE
+      - MYSQL_USER
+      - MYSQL_PASSWORD
+  php:
+    build: 
+      context: './php/'
+      args:
+       - PHP_VERSION
+    volumes:
+      - web:/var/www/html/
+  web:
+    build:
+      context: './web/'
+      args:
+       - APACHE_VERSION
+    depends_on:
+      - php
+      - db
+    ports:
+      - "80:80"
+    volumes:
+      - web:/var/www/html/

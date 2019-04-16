@@ -1,0 +1,92 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: all
+  tasks:
+  - name: Install docker-compose
+    pip:
+      name: docker-compose
+  
+  - name: Create staging directory on host
+    file:
+      path: "{{ staging_path }}"
+      state: directory
+
+  - name: Copy docker files to host
+    synchronize:
+      src: "{{ playbook_dir }}/docker/"
+      dest: "{{ staging_path }}/docker/"
+      delete: yes
+      owner: no
+      group: no
+
+  - name: Call docker compose to build images
+    command: docker-compose build
+    args:
+      chdir: "{{ staging_path }}/docker"
+    environment:
+      COMPOSE_PROJECT_NAME: hashtopolis
+      PHP_VERSION: "{{ php_version }}"
+      MYSQL_VERSION: "{{ mysql_version }}"
+      APACHE_VERSION: "{{ apache_version }}"
+      MYSQL_RANDOM_ROOT_PASSWORD: "True"
+      MYSQL_DATABASE: "{{ mysql_dbname }}"
+      MYSQL_USER: "{{ mysql_username }}"
+      MYSQL_PASSWORD: "{{ mysql_userpass }}"
+    register: output
+
+  - debug:
+      var: output
+
+  - name: Call docker compose to run containers
+    command: docker-compose up -d --force-recreate
+    args:
+      chdir: "{{ staging_path }}/docker"
+    environment:
+      COMPOSE_PROJECT_NAME: hashtopolis
+      PHP_VERSION: "{{ php_version }}"
+      MYSQL_VERSION: "{{ mysql_version }}"
+      APACHE_VERSION: "{{ apache_version }}"
+      MYSQL_RANDOM_ROOT_PASSWORD: "True"
+      MYSQL_DATABASE: "{{ mysql_dbname }}"
+      MYSQL_USER: "{{ mysql_username }}"
+      MYSQL_PASSWORD: "{{ mysql_userpass }}"
+    register: output
+    changed_when: '"reating" in output.stderr'
+
+  - debug:
+      var: output
+
+  - name: Clone hashtopolis repo from github
+    git:
+      repo: "{{ hashtopolis_repo }}"
+      dest: "{{ staging_path }}/git"
+
+  - name: Check if application has been installed already
+    stat: 
+      path: "{{ install_path }}/inc/conf.php"
+    register: app_installed
+
+  - name: Install application code for first time
+    synchronize:
+      src: "{{ staging_path }}/git/src/"
+      dest: "{{ install_path }}/"
+      delete: yes
+    when: app_installed.stat.exists == False
+    delegate_to: "{{ inventory_hostname }}"
+
+  - name: Upgrade or reinstall application
+    synchronize:
+      src: "{{ staging_path }}/git/src/"
+      dest: "{{ install_path }}/"
+      rsync_opts:
+        - "--exclude=/install"
+    when: app_installed.stat.exists == True
+    delegate_to: "{{ inventory_hostname }}"
+
+  - name: Fix install directory permissions
+    file: 
+      path: "{{ install_path }}"
+      owner: "{{ install_user }}"
+      group: "{{ install_group }}"
+      state: directory
+      recurse: yes
