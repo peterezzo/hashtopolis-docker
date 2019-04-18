@@ -61,8 +61,16 @@
       repo: "{{ hashtopolis_repo }}"
       dest: "{{ staging_path }}/git"
 
+  - name: Set staged code as owned by install_user
+    file:
+      path: "{{ staging_path }}/git/src"
+      owner: "{{ install_user }}"
+      group: "{{ install_group }}"
+      state: directory
+      recurse: yes
+
   - name: Check if application has been installed already
-    stat: 
+    stat:
       path: "{{ install_path }}/inc/conf.php"
     register: app_installed
 
@@ -82,11 +90,3 @@
         - "--exclude=/install"
     when: app_installed.stat.exists == True
     delegate_to: "{{ inventory_hostname }}"
-
-  - name: Fix install directory permissions
-    file: 
-      path: "{{ install_path }}"
-      owner: "{{ install_user }}"
-      group: "{{ install_group }}"
-      state: directory
-      recurse: yes
