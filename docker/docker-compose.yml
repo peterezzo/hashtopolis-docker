@@ -7,6 +7,8 @@ services:
     image: mysql:${MYSQL_VERSION}
     volumes:
       - db:/var/lib/mysql
+    logging:
+      driver: journald
     environment:
       - MYSQL_RANDOM_ROOT_PASSWORD
       - MYSQL_DATABASE
@@ -19,6 +21,8 @@ services:
        - PHP_VERSION
     volumes:
       - web:/var/www/html/
+    logging:
+      driver: journald
   web:
     build:
       context: './web/'
@@ -31,3 +35,5 @@ services:
       - "80:80"
     volumes:
       - web:/var/www/html/
+    logging:
+      driver: journald
